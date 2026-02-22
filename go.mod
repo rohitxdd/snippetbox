@@ -1,3 +1,3 @@
 module github.com/rohitxdd/snippetbox
 
-go 1.24.1
+go 1.26.0
