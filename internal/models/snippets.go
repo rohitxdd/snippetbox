@@ -48,7 +48,7 @@ func (m *SnippetModel) Get(id int) (*Snippet, error) {
 
 	row := m.DB.QueryRow(q, id)
 
-	s := Snippet{}
+	s := &Snippet{}
 
 	err := row.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
 
@@ -63,8 +63,7 @@ func (m *SnippetModel) Get(id int) (*Snippet, error) {
 			return nil, err
 		}
 	}
-
-	return &s, nil
+	return s, nil
 }
 
 // This will return the 10 most recently created snippets.

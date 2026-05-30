@@ -1,13 +1,9 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
-	"text/template"
-
-	"github.com/rohitxdd/snippetbox/internal/models"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -16,25 +12,18 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files := []string{
-		"./ui/html/base.tmpl.html",
-		"./ui/html/partials/nav.tmpl.html",
-		"./ui/html/pages/home.tmpl.html",
-	}
-
-	ts, err := template.ParseFiles(files...)
-
-	if err != nil {
-		app.ServerError(w, err) //RohitSupaBase@998
-		return
-
-	}
-
-	err = ts.ExecuteTemplate(w, "base", nil)
+	snippets, err := app.snippets.Latest()
 
 	if err != nil {
 		app.ServerError(w, err)
+		return
 	}
+
+	data := &templateData{
+		Snippets: snippets,
+	}
+
+	app.Render(w, 200, "home.tmpl.html", data)
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
@@ -46,16 +35,11 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 	snippet, err := app.snippets.Get(id)
 
-	if err != nil {
-		if errors.Is(err, models.ErrNoRecord) {
-			app.NotFound(w)
-			return
-		}
-		app.ServerError(w, err)
-		return
+	data := &templateData{
+		Snippet: snippet,
 	}
 
-	fmt.Fprintf(w, "%+v", snippet)
+	app.Render(w, 200, "view.tmpl.html", data)
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
