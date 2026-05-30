@@ -18,7 +18,6 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		app.ServerError(w, err)
 		return
 	}
-
 	data := app.newTemplateData()
 
 	data.Snippets = snippets
