@@ -3,10 +3,10 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
-	"text/template"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/rohitxdd/snippetbox/internal/models"
