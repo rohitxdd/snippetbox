@@ -16,7 +16,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		app.ServerError(w, err)
 		return
 	}
-	data := app.newTemplateData()
+	data := app.newTemplateData(r)
 
 	data.Snippets = snippets
 
@@ -35,7 +35,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 	snippet, err := app.snippets.Get(id)
 
-	data := app.newTemplateData()
+	data := app.newTemplateData(r)
 
 	data.Snippet = snippet
 
@@ -43,7 +43,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateData()
+	data := app.newTemplateData(r)
 	// Initialize a new createSnippetForm instance and pass it to the template.
 	// Notice how this is also a great opportunity to set any default or
 	// 'initial' values for the form --- here we set the initial value for the
@@ -77,7 +77,7 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	form.CheckField(validator.PermittedInt(form.Expires, 1, 7, 365), "expires", "This field must equal 1, 7 or 365")
 
 	if !form.Valid() {
-		data := app.newTemplateData()
+		data := app.newTemplateData(r)
 		data.Form = form
 		app.Render(w, http.StatusUnprocessableEntity, "create.tmpl.html", data)
 		return
@@ -88,6 +88,8 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		app.ServerError(w, err)
 		return
 	}
+
+	app.sessionManager.Put(r.Context(), "flash", "Snippet successfully created!")
 
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 }
