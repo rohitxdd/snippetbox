@@ -1,11 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/rohitxdd/snippetbox/internal/models"
 	"github.com/rohitxdd/snippetbox/internal/validator"
 )
 
@@ -108,8 +110,50 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Create a new user...")
+	var userForm userCreateForm
+	err := app.decodePostForm(r, &userForm)
+
+	if err != nil {
+		app.ClientError(w, http.StatusBadRequest)
+		return
+	}
+	//check for empty fields
+	userForm.CheckField(validator.NotBlank(userForm.Name), "name", "Name cannot be null")
+	userForm.CheckField(validator.NotBlank(userForm.Email), "email", "email cannot be null")
+	userForm.CheckField(validator.NotBlank(userForm.Password), "password", "password cannot be null")
+	//validate name, email, password
+
+	userForm.CheckField(validator.ValidEmail(userForm.Email), "email", "Invalid Email")
+	userForm.CheckField(validator.ValidUserName(userForm.Name), "name", "Name must be alpha numeric b/w 4 to 16 chars")
+	userForm.CheckField(validator.ValidUserName(userForm.Password), "password", "password must be greater than 8 chars")
+
+	if !userForm.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = userForm
+		app.Render(w, http.StatusUnprocessableEntity, "signup.tmpl.html", data)
+		return
+	}
+
+	err = app.users.Insert(userForm.Name, userForm.Email, userForm.Password)
+
+	if err != nil {
+		if errors.Is(err, models.ErrDuplicateEmail) {
+			userForm.AddFieldError("email", "Email Address is already in use")
+			data := app.newTemplateData(r)
+			data.Form = userForm
+			app.Render(w, http.StatusUnprocessableEntity, "signup.tmpl.html", data)
+			return
+		} else {
+			app.ServerError(w, err)
+			return
+		}
+	}
+
+	app.sessionManager.Put(r.Context(), "flash", "Your signup was successful. Please log in.")
+	// And redirect the user to the login page.
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 }
+
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Display a HTML form for logging in a user...")
 }

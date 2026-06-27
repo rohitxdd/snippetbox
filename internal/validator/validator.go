@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"regexp"
 	"strings"
 	"unicode/utf8"
 )
@@ -55,4 +56,21 @@ func PermittedInt(value int, permittedValues ...int) bool {
 		}
 	}
 	return false
+}
+
+var EmailRex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+var UserNameRex = regexp.MustCompile(`^\w{4,16}$`)
+var PasswordRex = regexp.MustCompile(`^\w{8,16}$`)
+
+func ValidEmail(value string) bool {
+	return EmailRex.Match([]byte(value))
+}
+
+func ValidUserName(value string) bool {
+	return UserNameRex.Match([]byte(value))
+}
+
+// basic password validate
+func ValidPassword(value string) bool {
+	return PasswordRex.Match([]byte(value))
 }
